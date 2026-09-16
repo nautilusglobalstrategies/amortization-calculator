@@ -1,467 +1,1821 @@
-Amortization Acceleration Code
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Estimate standard mortgage payoff alongside an account-flow acceleration plan."
+  />
   <title>Amortization Acceleration Calculator</title>
+
   <style>
-    *{box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f6fb;padding:16px}
-    .container{max-width:520px;margin:auto;background:#fff;border-radius:14px;box-shadow:0 10px 25px rgba(0,0,0,.12);overflow:hidden}
-    .header{padding:16px 18px;background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);color:#fff}
-    .header h1{margin:0;font-size:1.25rem}
-    .header p{margin:6px 0 0;opacity:.95;font-size:.9rem}
-    .content{padding:16px 18px}
-    .group{padding:14px;border-radius:12px;margin-bottom:12px}
-    .group h2{margin:0 0 10px;font-size:1rem}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    label{display:block;font-weight:650;margin:8px 0 6px;font-size:.9rem;color:#1f2937}
-    input,select{width:100%;padding:11px;border-radius:10px;border:1px solid #cbd5e1;font-size:16px}
-    input:focus,select:focus{outline:none;border-color:#4facfe}
-    .muted{color:#475569;font-size:.82rem;line-height:1.35;margin-top:8px}
-    .btn{width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-weight:800;font-size:1.05rem;cursor:pointer}
-    .btn:active{transform:scale(.99)}
-    .results{display:none;margin-top:14px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:14px}
-    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-    .card{padding:12px;border-radius:12px;color:#fff}
-    .card .lbl{opacity:.92;font-size:.82rem}
-    .card .val{font-size:1.15rem;font-weight:900;margin-top:4px}
-    .green{background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%)}
-    .blue{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
-    .table{width:100%;border-collapse:collapse;margin-top:10px}
-    .table th,.table td{border:1px solid #e5e7eb;padding:8px;text-align:center;font-size:.85rem}
-    .table th{background:#eef2ff;font-weight:800}
-    .warn{margin-top:10px;font-size:.85rem;font-weight:800}
-    .pos{color:#16a34a}
-    .neg{color:#dc2626}
-    @media (max-width:480px){.row{grid-template-columns:1fr}}
+    :root {
+      --navy: #13233f;
+      --navy-2: #20385f;
+      --blue: #2d6cdf;
+      --blue-light: #eaf2ff;
+      --teal: #0f8f7f;
+      --teal-light: #e9fbf7;
+      --green: #16803c;
+      --green-light: #ebf9f0;
+      --amber: #a55b00;
+      --amber-light: #fff5e6;
+      --red: #b42318;
+      --red-light: #fff0ef;
+      --slate-950: #111827;
+      --slate-800: #1f2937;
+      --slate-700: #374151;
+      --slate-600: #4b5563;
+      --slate-500: #6b7280;
+      --slate-400: #9ca3af;
+      --slate-300: #d1d5db;
+      --slate-200: #e5e7eb;
+      --slate-100: #f3f4f6;
+      --slate-50: #f8fafc;
+      --white: #ffffff;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 9px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--slate-800);
+      background:
+        radial-gradient(circle at top left, rgba(45, 108, 223, 0.12), transparent 34%),
+        radial-gradient(circle at top right, rgba(15, 143, 127, 0.09), transparent 30%),
+        var(--slate-50);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page-shell {
+      width: min(1160px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 44px;
+    }
+
+    .hero {
+      padding: 28px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      position: relative;
+      color: var(--white);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(135deg, rgba(19, 35, 63, 0.99), rgba(32, 56, 95, 0.96)),
+        var(--navy);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -90px;
+      top: -120px;
+      border-radius: 50%;
+      background: rgba(96, 165, 250, 0.16);
+    }
+
+    .hero > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #b9d4ff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin-bottom: 10px;
+      font-size: clamp(1.7rem, 4.5vw, 2.55rem);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-copy {
+      max-width: 700px;
+      margin-bottom: 0;
+      color: #e4edf9;
+      font-size: 1rem;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      overflow: hidden;
+      border: 1px solid rgba(203, 213, 225, 0.85);
+      border-radius: var(--radius-lg);
+      background: var(--white);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+    }
+
+    .panel-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--slate-200);
+      background: linear-gradient(180deg, #ffffff, #fbfdff);
+    }
+
+    .panel-header h2 {
+      margin: 0 0 4px;
+      color: var(--navy);
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-header p {
+      margin: 0;
+      color: var(--slate-600);
+      font-size: 0.9rem;
+    }
+
+    .form-body {
+      padding: 18px;
+    }
+
+    .form-section {
+      padding: 16px;
+      margin-bottom: 14px;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      background: var(--white);
+    }
+
+    .form-section:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 4px;
+      color: var(--navy);
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .section-title .icon {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--blue-light);
+      font-size: 0.95rem;
+    }
+
+    .section-note {
+      margin: 0 0 12px;
+      color: var(--slate-600);
+      font-size: 0.83rem;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field-grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .field {
+      min-width: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--slate-700);
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .prefix,
+    .suffix {
+      position: absolute;
+      top: 50%;
+      z-index: 1;
+      color: var(--slate-500);
+      font-size: 0.9rem;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .prefix {
+      left: 12px;
+    }
+
+    .suffix {
+      right: 12px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 45px;
+      padding: 10px 12px;
+      color: var(--slate-950);
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-sm);
+      outline: none;
+      background: var(--white);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    input.with-prefix {
+      padding-left: 27px;
+    }
+
+    input.with-suffix {
+      padding-right: 31px;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.14);
+    }
+
+    input::placeholder {
+      color: var(--slate-400);
+    }
+
+    .income-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 148px;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--slate-100);
+    }
+
+    .income-row:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .income-row:first-of-type {
+      padding-top: 4px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      background: var(--blue-light);
+      color: var(--slate-700);
+      font-size: 0.82rem;
+    }
+
+    .checkbox-row input {
+      width: 16px;
+      min-height: 16px;
+      margin: 2px 0 0;
+      accent-color: var(--blue);
+    }
+
+    .action-area {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .primary-button,
+    .secondary-button {
+      min-height: 50px;
+      padding: 13px 16px;
+      border: 0;
+      border-radius: 11px;
+      font-weight: 850;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    }
+
+    .primary-button {
+      color: var(--white);
+      background: linear-gradient(135deg, var(--blue), #1c55c4);
+      box-shadow: 0 10px 20px rgba(45, 108, 223, 0.24);
+    }
+
+    .primary-button:hover,
+    .secondary-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary-button:active,
+    .secondary-button:active {
+      transform: translateY(0);
+    }
+
+    .secondary-button {
+      color: var(--blue);
+      border: 1px solid #bed4ff;
+      background: #f6f9ff;
+    }
+
+    .disclaimer {
+      margin: 14px 2px 0;
+      color: var(--slate-500);
+      font-size: 0.77rem;
+      line-height: 1.5;
+    }
+
+    .results-panel {
+      display: none;
+    }
+
+    .results-panel.visible {
+      display: block;
+    }
+
+    .results-body {
+      padding: 18px;
+    }
+
+    .status {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding: 13px;
+      border: 1px solid;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .status-icon {
+      display: grid;
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      border-radius: 50%;
+      font-size: 0.76rem;
+    }
+
+    .status.success {
+      color: #116534;
+      border-color: #b7e8c7;
+      background: var(--green-light);
+    }
+
+    .status.success .status-icon {
+      color: var(--white);
+      background: var(--green);
+    }
+
+    .status.warning {
+      color: #8c4e00;
+      border-color: #f7d4a2;
+      background: var(--amber-light);
+    }
+
+    .status.warning .status-icon {
+      color: var(--white);
+      background: var(--amber);
+    }
+
+    .status.error {
+      color: #9c2019;
+      border-color: #fac5c1;
+      background: var(--red-light);
+    }
+
+    .status.error .status-icon {
+      color: var(--white);
+      background: var(--red);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      background: var(--white);
+    }
+
+    .metric-card.primary {
+      color: var(--white);
+      border: 0;
+      background: linear-gradient(135deg, #0d7b70, #19a991);
+    }
+
+    .metric-card.secondary {
+      color: var(--white);
+      border: 0;
+      background: linear-gradient(135deg, #345dd0, #7053c5);
+    }
+
+    .metric-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--slate-600);
+      font-size: 0.76rem;
+      font-weight: 750;
+      line-height: 1.25;
+    }
+
+    .metric-card.primary .metric-label,
+    .metric-card.secondary .metric-label {
+      color: rgba(255, 255, 255, 0.84);
+    }
+
+    .metric-value {
+      display: block;
+      overflow-wrap: anywhere;
+      color: var(--slate-950);
+      font-size: clamp(1.1rem, 3.5vw, 1.45rem);
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+    }
+
+    .metric-card.primary .metric-value,
+    .metric-card.secondary .metric-value {
+      color: var(--white);
+    }
+
+    .comparison-wrap {
+      overflow-x: auto;
+      margin-bottom: 16px;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+    }
+
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      background: var(--white);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: right;
+      border-bottom: 1px solid var(--slate-200);
+      font-size: 0.84rem;
+      white-space: nowrap;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+      white-space: normal;
+    }
+
+    th {
+      color: var(--navy);
+      background: #f1f6ff;
+      font-size: 0.76rem;
+      font-weight: 850;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .accent-positive {
+      color: var(--green);
+      font-weight: 850;
+    }
+
+    .accent-negative {
+      color: var(--red);
+      font-weight: 850;
+    }
+
+    .subheading {
+      margin: 20px 0 10px;
+      color: var(--navy);
+      font-size: 1rem;
+      font-weight: 850;
+    }
+
+    .result-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .result-item {
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+    }
+
+    .result-item dt {
+      margin-bottom: 4px;
+      color: var(--slate-600);
+      font-size: 0.74rem;
+      font-weight: 750;
+    }
+
+    .result-item dd {
+      margin: 0;
+      color: var(--slate-950);
+      font-size: 0.98rem;
+      font-weight: 850;
+      overflow-wrap: anywhere;
+    }
+
+    details {
+      margin-top: 16px;
+      overflow: hidden;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      background: var(--white);
+    }
+
+    summary {
+      padding: 14px 15px;
+      color: var(--navy);
+      font-size: 0.9rem;
+      font-weight: 850;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: "+";
+      float: right;
+      color: var(--blue);
+      font-size: 1.1rem;
+    }
+
+    details[open] summary {
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    details[open] summary::after {
+      content: "−";
+    }
+
+    .details-content {
+      padding: 14px 15px 16px;
+    }
+
+    .details-content p,
+    .details-content li {
+      color: var(--slate-600);
+      font-size: 0.84rem;
+    }
+
+    .details-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .details-content ul {
+      margin: 8px 0 14px;
+      padding-left: 18px;
+    }
+
+    .event-log-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-sm);
+    }
+
+    .event-log {
+      min-width: 760px;
+    }
+
+    .event-log th,
+    .event-log td {
+      padding: 9px 10px;
+      font-size: 0.76rem;
+    }
+
+    .test-panel {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px dashed #b8c8e1;
+      border-radius: var(--radius-md);
+      background: #f8fbff;
+    }
+
+    .test-panel h3 {
+      margin-bottom: 6px;
+      color: var(--navy);
+      font-size: 0.92rem;
+    }
+
+    .test-panel p {
+      margin-bottom: 10px;
+      color: var(--slate-600);
+      font-size: 0.8rem;
+    }
+
+    .test-results {
+      display: grid;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .test-result {
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .test-pass {
+      color: #116534;
+      background: var(--green-light);
+    }
+
+    .test-fail {
+      color: #9c2019;
+      background: var(--red-light);
+    }
+
+    .footer-note {
+      margin: 18px 4px 0;
+      color: var(--slate-500);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    @media (min-width: 960px) {
+      .app-grid {
+        grid-template-columns: minmax(390px, 0.9fr) minmax(500px, 1.1fr);
+      }
+
+      .results-panel {
+        position: sticky;
+        top: 18px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page-shell {
+        width: min(100% - 20px, 1160px);
+        padding-top: 10px;
+      }
+
+      .hero {
+        padding: 23px 20px;
+        border-radius: 14px;
+      }
+
+      .form-body,
+      .results-body {
+        padding: 14px;
+      }
+
+      .panel-header {
+        padding: 16px;
+      }
+
+      .form-section {
+        padding: 14px;
+      }
+
+      .field-grid,
+      .field-grid.three,
+      .result-list {
+        grid-template-columns: 1fr;
+      }
+
+      .income-row {
+        grid-template-columns: 1fr;
+        gap: 9px;
+      }
+
+      .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .metric-card {
+        padding: 12px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Amortization Acceleration Calculator</h1>
-      <p>Velocity Banking + HELOC Chunk Cycling (next chunk only after HELOC is paid back down)</p>
-    </div>
+  <main class="page-shell">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">Mortgage Payoff Estimate</p>
+      <h1 id="page-title">Amortization Acceleration Calculator</h1>
+      <p class="hero-copy">
+        Compare a standard mortgage payoff with an account-flow acceleration plan.
+      </p>
+    </section>
 
-    <div class="content">
-      <div class="group" style="background:#f1f5f9">
-        <h2>💰 Income Deposits (Applied on Their Actual Frequency)</h2>
+    <section class="app-grid">
+      <section class="panel" aria-labelledby="inputs-title">
+        <header class="panel-header">
+          <h2 id="inputs-title">Plan Inputs</h2>
+          <p>Enter estimated balances, rates, deposits, expenses, and timing.</p>
+        </header>
 
-        <div class="row">
-          <div>
-            <label for="income1">Income #1 Amount</label>
-            <input type="number" id="income1" placeholder="1500" inputmode="decimal">
+        <div class="form-body">
+          <section class="form-section">
+            <div class="section-title">
+              <span class="icon">💰</span>
+              <span>Income Deposits</span>
+            </div>
+            <p class="section-note">
+              Deposits are applied on the stated frequency and reduce the Acceleration Account balance.
+            </p>
+
+            <div class="income-row">
+              <div class="field">
+                <label for="income1">Income stream 1 amount</label>
+                <div class="input-wrap">
+                  <span class="prefix">$</span>
+                  <input class="with-prefix" id="income1" type="number" min="0" step="0.01" value="1500" inputmode="decimal" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="freq1">Frequency</label>
+                <select id="freq1">
+                  <option value="weekly" selected>Weekly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="income-row">
+              <div class="field">
+                <label for="income2">Income stream 2 amount</label>
+                <div class="input-wrap">
+                  <span class="prefix">$</span>
+                  <input class="with-prefix" id="income2" type="number" min="0" step="0.01" value="2500" inputmode="decimal" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="freq2">Frequency</label>
+                <select id="freq2">
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly" selected>Biweekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="income-row">
+              <div class="field">
+                <label for="income3">Income stream 3 amount</label>
+                <div class="input-wrap">
+                  <span class="prefix">$</span>
+                  <input class="with-prefix" id="income3" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="freq3">Frequency</label>
+                <select id="freq3">
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="monthly" selected>Monthly</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-title">
+              <span class="icon">📆</span>
+              <span>Recurring Expenses</span>
+            </div>
+            <p class="section-note">
+              Enter recurring household expenses only. Do not include the mortgage payment.
+            </p>
+
+            <div class="field-grid">
+              <div class="field">
+                <label for="monthlyExpenses">Monthly expenses</label>
+                <div class="input-wrap">
+                  <span class="prefix">$</span>
+                  <input class="with-prefix" id="monthlyExpenses" type="number" min="0" step="0.01" value="5200" inputmode="decimal" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="expenseDay">Expense withdrawal day</label>
+                <select id="expenseDay">
+                  <option value="1">Day 1</option>
+                  <option value="15">Day 15</option>
+                  <option value="30" selected>Day 30</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-title">
+              <span class="icon">🏠</span>
+              <span>Mortgage</span>
+            </div>
+            <p class="section-note">
+              The calculator derives the scheduled principal-and-interest payment from the entered balance, rate, and remaining term.
+            </p>
+
+            <div class="field-grid">
+              <div class="field">
+                <label for="mortBalance">Mortgage principal balance</label>
+                <div class="input-wrap">
+                  <span class="prefix">$</span>
+                  <input class="with-prefix" id="mortBalance" type="number" min="0" step="0.01" value="380000" inputmode="decimal" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="mortRate">Annual mortgage rate</label>
+                <div class="input-wrap">
+                  <input class="with-suffix" id="mortRate" type="number" min="0" step="0.01" value="6.80" inputmode="decimal" />
+                  <span class="suffix">%</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="mortYears">Years remaining</label>
+                <input id="mortYears" type="number" min="1" step="1" value="26" inputmode="numeric" />
+              </div>
+
+              <div class="field">
+                <label for="mortPayDay">Mortgage payment day</label>
+                <select id="mortPayDay">
+                  <option value="1" selected>Day 1</option>
+                  <option value="15">Day 15</option>
+                  <option value="30">Day 30</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-title">
+              <span class="icon">⚡</span>
+              <span>Acceleration Account</span>
+            </div>
+            <p class="section-note">
+              The Acceleration Account is a reusable account used in this estimate. Deposits reduce its balance; scheduled expenses and mortgage payments increase it.
+            </p>
+
+            <div class="field-grid">
+              <div class="field">
+                <label for="accountCapacity">Account capacity</label>
+                <div class="input-wrap">
+                  <span class="prefix">$</span>
+                  <input class="with-prefix" id="accountCapacity" type="number" min="0" step="0.01" value="160000" inputmode="decimal" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="accountRate">Account rate</label>
+                <div class="input-wrap">
+                  <input class="with-suffix" id="accountRate" type="number" min="0" step="0.01" value="7.90" inputmode="decimal" />
+                  <span class="suffix">%</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="advancePct">Advance size</label>
+                <div class="input-wrap">
+                  <input class="with-suffix" id="advancePct" type="number" min="1" max="100" step="0.01" value="50" inputmode="decimal" />
+                  <span class="suffix">% of capacity</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="minimumAdvance">Minimum advance</label>
+                <div class="input-wrap">
+                  <span class="prefix">$</span>
+                  <input class="with-prefix" id="minimumAdvance" type="number" min="1" step="0.01" value="1000" inputmode="decimal" />
+                </div>
+              </div>
+            </div>
+
+            <label class="checkbox-row" for="directCompare">
+              <input id="directCompare" type="checkbox" checked />
+              <span>
+                Include a direct-extra-principal estimate using the same modeled monthly surplus, without the Acceleration Account.
+              </span>
+            </label>
+          </section>
+
+          <div class="action-area">
+            <button class="primary-button" id="calculateBtn" type="button">
+              Calculate Plan
+            </button>
+            <button class="secondary-button" id="runTestsBtn" type="button">
+              Run Calculation Tests
+            </button>
           </div>
-          <div>
-            <label for="freq1">Income #1 Frequency</label>
-            <select id="freq1">
-              <option value="weekly" selected>Weekly</option>
-              <option value="biweekly">Bi-weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
+
+          <p class="disclaimer">
+            Results are estimates for educational purposes only. Actual account terms, rates, fees, payment rules, interest methods, and account availability vary. This tool is not financial, lending, legal, or tax advice.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel results-panel" id="resultsPanel" aria-live="polite" aria-labelledby="results-title">
+        <header class="panel-header">
+          <h2 id="results-title">Estimated Results</h2>
+          <p id="resultsSubtitle">Run the calculator to view the comparison.</p>
+        </header>
+
+        <div class="results-body">
+          <div id="statusBox" class="status success">
+            <span class="status-icon">✓</span>
+            <span id="statusText">Enter inputs and select Calculate Plan.</span>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card primary">
+              <span class="metric-label" id="interestDifferenceLabel">Interest Difference vs Standard</span>
+              <strong class="metric-value" id="interestDifferenceValue">—</strong>
+            </article>
+
+            <article class="metric-card secondary">
+              <span class="metric-label" id="timeDifferenceLabel">Time Difference vs Standard</span>
+              <strong class="metric-value" id="timeDifferenceValue">—</strong>
+            </article>
+          </div>
+
+          <div class="comparison-wrap">
+            <table aria-label="Mortgage payoff comparison">
+              <thead>
+                <tr>
+                  <th>Measure</th>
+                  <th>Standard Mortgage</th>
+                  <th>Acceleration Plan</th>
+                  <th id="directHeader">Direct Principal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Projected payoff time</td>
+                  <td id="stdTime">—</td>
+                  <td id="planTime">—</td>
+                  <td id="directTime">—</td>
+                </tr>
+                <tr>
+                  <td>Total mortgage interest</td>
+                  <td id="stdMortgageInterest">—</td>
+                  <td id="planMortgageInterest">—</td>
+                  <td id="directMortgageInterest">—</td>
+                </tr>
+                <tr>
+                  <td>Account interest</td>
+                  <td>$0</td>
+                  <td id="planAccountInterest">—</td>
+                  <td>$0</td>
+                </tr>
+                <tr>
+                  <td>Combined interest</td>
+                  <td id="stdCombinedInterest">—</td>
+                  <td id="planCombinedInterest">—</td>
+                  <td id="directCombinedInterest">—</td>
+                </tr>
+                <tr>
+                  <td>Outcome status</td>
+                  <td id="stdStatus">—</td>
+                  <td id="planStatus">—</td>
+                  <td id="directStatus">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="subheading">Acceleration Account Details</h3>
+
+          <dl class="result-list">
+            <div class="result-item">
+              <dt>Scheduled mortgage payment</dt>
+              <dd id="scheduledMortgagePayment">—</dd>
+            </div>
+            <div class="result-item">
+              <dt>Advance cycles completed</dt>
+              <dd id="advanceCycles">—</dd>
+            </div>
+            <div class="result-item">
+              <dt>Highest account balance</dt>
+              <dd id="highestAccountBalance">—</dd>
+            </div>
+            <div class="result-item">
+              <dt>Peak account utilization</dt>
+              <dd id="peakUtilization">—</dd>
+            </div>
+            <div class="result-item">
+              <dt>Ending mortgage balance</dt>
+              <dd id="endingMortgageBalance">—</dd>
+            </div>
+            <div class="result-item">
+              <dt>Ending account balance</dt>
+              <dd id="endingAccountBalance">—</dd>
+            </div>
+          </dl>
+
+          <details>
+            <summary>Calculation Details</summary>
+            <div class="details-content">
+              <p>
+                The estimate processes daily account activity using 30-day months and a 365-day year for daily account interest.
+              </p>
+              <ul>
+                <li>Daily account interest is calculated from the current outstanding account balance.</li>
+                <li>Deposits reduce the account balance on their scheduled simulated days.</li>
+                <li>Monthly expenses and the scheduled mortgage payment are modeled as account withdrawals on their selected days.</li>
+                <li>Mortgage interest is calculated monthly from mortgage principal only; it is not added to mortgage principal.</li>
+                <li>New account advances require the prior account balance to be at or below $1 and at least 30 days must pass between advances.</li>
+                <li>The plan succeeds only when both the mortgage and account balances reach $0.</li>
+              </ul>
+
+              <p><strong>First 24 months of activity</strong></p>
+              <div class="event-log-wrap">
+                <table class="event-log" aria-label="First 24 months of plan activity">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Deposits</th>
+                      <th>Expenses</th>
+                      <th>Mortgage Payment</th>
+                      <th>Account Advances</th>
+                      <th>Mortgage Principal</th>
+                      <th>Account Balance</th>
+                      <th>Mortgage Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody id="eventLogBody">
+                    <tr>
+                      <td colspan="8">Run the calculator to generate the first 24 months of activity.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+
+          <div id="testPanel" class="test-panel" hidden>
+            <h3>Internal Calculation Tests</h3>
+            <p>
+              These automated checks validate the calculator’s core balance, interest, timing, limit, and reporting protections.
+            </p>
+            <div class="test-results" id="testResults"></div>
           </div>
         </div>
+      </section>
+    </section>
 
-        <div class="row">
-          <div>
-            <label for="income2">Income #2 Amount</label>
-            <input type="number" id="income2" placeholder="2500" inputmode="decimal">
-          </div>
-          <div>
-            <label for="freq2">Income #2 Frequency</label>
-            <select id="freq2">
-              <option value="weekly">Weekly</option>
-              <option value="biweekly" selected>Bi-weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-        </div>
+    <p class="footer-note">
+      Amortization Acceleration Calculator · Educational estimate only
+    </p>
+  </main>
 
-        <div class="row">
-          <div>
-            <label for="income3">Income #3 Amount</label>
-            <input type="number" id="income3" placeholder="3500" inputmode="decimal">
-          </div>
-          <div>
-            <label for="freq3">Income #3 Frequency</label>
-            <select id="freq3">
-              <option value="weekly">Weekly</option>
-              <option value="biweekly">Bi-weekly</option>
-              <option value="monthly" selected>Monthly</option>
-            </select>
-          </div>
-        </div>
+  <script>
+    (() => {
+      "use strict";
 
-        <div class="muted">
-          Deposits hit the HELOC like a checking account: weekly = every 7 days, bi-weekly = every 14 days, monthly = every 30 days.
-        </div>
-      </div>
+      const DAYS_PER_MONTH = 30;
+      const DAYS_PER_YEAR = 365;
+      const MAX_SIMULATION_DAYS = 365 * 80;
+      const PAYOFF_THRESHOLD = 1;
+      const MIN_DAYS_BETWEEN_ADVANCES = 30;
+      const MONEY_EPSILON = 0.01;
 
-      <div class="group" style="background:#fff5f5">
-        <h2>📊 Monthly Expenses</h2>
-        <label for="monthlyExpenses">Total Monthly Expenses</label>
-        <input type="number" id="monthlyExpenses" placeholder="5200" inputmode="decimal">
-        <div class="muted">
-          Expenses withdraw once per month on day 30 (after deposits that day). Do <b>not</b> include your mortgage payment here.
-        </div>
-      </div>
+      const $ = (id) => document.getElementById(id);
 
-      <div class="group" style="background:#f0f8ff">
-        <h2>🏠 Mortgage</h2>
-        <div class="row">
-          <div>
-            <label for="mortBalance">Mortgage Balance</label>
-            <input type="number" id="mortBalance" placeholder="380000" inputmode="decimal">
-          </div>
-          <div>
-            <label for="mortRate">Mortgage Rate (%)</label>
-            <input type="number" step="0.01" id="mortRate" placeholder="6.8" inputmode="decimal">
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="mortYears">Years Remaining (for standard comparison)</label>
-            <input type="number" id="mortYears" placeholder="26" inputmode="decimal">
-          </div>
-          <div>
-            <label for="mortPayDay">Mortgage Payment Day</label>
-            <select id="mortPayDay">
-              <option value="1" selected>Day 1</option>
-              <option value="15">Day 15</option>
-              <option value="30">Day 30</option>
-            </select>
-          </div>
-        </div>
-        <div class="muted">Mortgage interest accrues monthly (30-day months). Standard mortgage payment is applied monthly on the selected day.</div>
-      </div>
-
-      <div class="group" style="background:#f5f0ff">
-        <h2>💳 HELOC (Interest-Only)</h2>
-        <div class="row">
-          <div>
-            <label for="helocLimit">HELOC Limit</label>
-            <input type="number" id="helocLimit" placeholder="160000" inputmode="decimal">
-          </div>
-          <div>
-            <label for="helocRate">HELOC Rate (%)</label>
-            <input type="number" step="0.01" id="helocRate" placeholder="7.9" inputmode="decimal">
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="chunkPct">Chunk Size (% of Available Credit)</label>
-            <input type="number" id="chunkPct" value="50" min="1" max="100" inputmode="decimal">
-          </div>
-          <div>
-            <label for="chunkMin">Minimum Chunk ($)</label>
-            <input type="number" id="chunkMin" value="1000" inputmode="decimal">
-          </div>
-        </div>
-        <div class="muted">
-          HELOC interest accrues <b>daily</b> and is capitalized onto the HELOC balance. Chunk cycling rule:
-          <b>Only take a new chunk after the HELOC is paid back down to $0 (or very close to $0).</b>
-        </div>
-      </div>
-
-      <button class="btn" id="calcBtn">Calculate 🚀</button>
-
-      <div class="results" id="results">
-        <div class="kpi">
-          <div class="card green">
-            <div class="lbl">Time Saved vs Standard</div>
-            <div class="val"><span id="timeSaved">0.0</span> years</div>
-          </div>
-          <div class="card blue">
-            <div class="lbl">Interest Savings vs Standard</div>
-            <div class="val">$<span id="interestSaved">0</span></div>
-          </div>
-        </div>
-
-        <table class="table">
-          <tr>
-            <th></th>
-            <th>Standard Mortgage</th>
-            <th>Velocity + HELOC Cycle</th>
-          </tr>
-          <tr>
-            <td>Payoff Time</td>
-            <td><span id="stdYearsOut">0.0</span> yrs</td>
-            <td><span id="velYearsOut">0.0</span> yrs</td>
-          </tr>
-          <tr>
-            <td>Mortgage Payment</td>
-            <td>$<span id="stdPmtOut">0</span>/mo</td>
-            <td>$<span id="stdPmtOut2">0</span>/mo</td>
-          </tr>
-          <tr>
-            <td>Total Interest</td>
-            <td>$<span id="stdIntOut">0</span></td>
-            <td>$<span id="velIntOut">0</span></td>
-          </tr>
-        </table>
-
-        <div class="muted" style="margin-top:10px">
-          Chunk cycle behavior:
-          <ul style="margin:8px 0 0 18px;padding:0">
-            <li>When HELOC balance is ~0 and mortgage still exists, the calculator takes a chunk (percent of available credit).</li>
-            <li>No additional chunks occur until HELOC is paid back down to ~0 again by deposits (after expenses & mortgage payment).</li>
-          </ul>
-        </div>
-
-        <div class="warn" id="warn"></div>
-      </div>
-    </div>
-  </div>
-
-<script>
-(function(){
-  const DAYS_PER_MONTH = 30;
-  const DAYS_PER_YEAR  = 365;
-  const MAX_DAYS       = 365 * 80;
-  const ZERO_EPS       = 1.00; // treat HELOC <= $1 as "paid off"
-
-  function n(x){ const v = parseFloat(x); return isFinite(v) ? v : 0; }
-  function fmt0(x){ return Math.round(x).toLocaleString(); }
-  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-
-  function stdMortgagePayment(P, annualRatePct, years){
-    const r = (annualRatePct/100)/12;
-    const m = Math.max(1, Math.round(years*12));
-    if (r <= 0) return P / m;
-    return P * (r * Math.pow(1+r, m)) / (Math.pow(1+r, m) - 1);
-  }
-
-  function runStandardMortgage(P0, annualRatePct, years){
-    const r = (annualRatePct/100)/12;
-    const pmt = stdMortgagePayment(P0, annualRatePct, years);
-    let bal = P0, months = 0, interest = 0;
-    const maxMonths = Math.min(12*80, Math.round(years*12) + 12*10);
-
-    while (bal > 0.01 && months < maxMonths){
-      const i = bal * r;
-      interest += i;
-      let principal = pmt - i;
-      if (principal < 0) principal = 0;
-      bal -= Math.min(principal, bal);
-      months++;
-    }
-    return { months, interest, pmt };
-  }
-
-  function runVelocityCycle({
-    mortBalance0, mortRatePct, mortYears, mortPayDay,
-    helocLimit, helocRatePct, chunkPct, chunkMin,
-    monthlyExpenses,
-    incomes
-  }){
-    const mortMonthlyRate = (mortRatePct/100)/12;
-    const helocDailyRate  = (helocRatePct/100)/DAYS_PER_YEAR;
-    const mortPmt = stdMortgagePayment(mortBalance0, mortRatePct, mortYears);
-
-    const freqToPeriodDays = (freq) => {
-      if (freq === "weekly") return 7;
-      if (freq === "biweekly") return 14;
-      return DAYS_PER_MONTH;
-    };
-
-    const streams = incomes.map(s => ({
-      amt: Math.max(0, n(s.amt)),
-      period: freqToPeriodDays(s.freq),
-      next: 1
-    }));
-
-    let mortBal = mortBalance0;
-    let helocBal = 0;
-
-    let totalMortInt = 0;
-    let totalHelocInt = 0;
-
-    let day = 0;
-
-    while ((mortBal > 0.01 || helocBal > 0.01) && day < MAX_DAYS){
-      day++;
-      const dayOfMonth = ((day - 1) % DAYS_PER_MONTH) + 1;
-
-      // 1) HELOC daily interest (capitalized)
-      if (helocBal > 0){
-        const i = helocBal * helocDailyRate;
-        totalHelocInt += i;
-        helocBal += i;
+      function numberValue(value) {
+        const parsed = Number.parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : 0;
       }
 
-      // 2) Deposits today reduce HELOC
-      let depositsToday = 0;
-      for (const st of streams){
-        if (st.amt <= 0) continue;
-        if (day === st.next){
-          depositsToday += st.amt;
-          st.next += st.period;
+      function clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(maximum, value));
+      }
+
+      function money(value, decimals = 0) {
+        if (!Number.isFinite(value)) return "—";
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        }).format(value);
+      }
+
+      function percent(value, decimals = 1) {
+        if (!Number.isFinite(value)) return "—";
+        return `${value.toFixed(decimals)}%`;
+      }
+
+      function yearsAndMonths(days) {
+        if (!Number.isFinite(days) || days < 0) return "—";
+        const months = Math.round(days / (DAYS_PER_YEAR / 12));
+        const years = Math.floor(months / 12);
+        const remainingMonths = months % 12;
+
+        if (years === 0) return `${remainingMonths} mo`;
+        if (remainingMonths === 0) return `${years} yr${years === 1 ? "" : "s"}`;
+        return `${years} yr${years === 1 ? "" : "s"} ${remainingMonths} mo`;
+      }
+
+      function frequencyToDays(frequency) {
+        if (frequency === "weekly") return 7;
+        if (frequency === "biweekly") return 14;
+        return DAYS_PER_MONTH;
+      }
+
+      function estimatedMonthlyIncome(incomes) {
+        return incomes.reduce((total, income) => {
+          const amount = Math.max(0, income.amount);
+          if (income.frequency === "weekly") return total + amount * (365 / 7) / 12;
+          if (income.frequency === "biweekly") return total + amount * (365 / 14) / 12;
+          return total + amount;
+        }, 0);
+      }
+
+      function mortgagePayment(principal, annualRatePercent, yearsRemaining) {
+        const monthlyRate = (annualRatePercent / 100) / 12;
+        const months = Math.max(1, Math.round(yearsRemaining * 12));
+
+        if (monthlyRate === 0) return principal / months;
+
+        return principal *
+          (monthlyRate * Math.pow(1 + monthlyRate, months)) /
+          (Math.pow(1 + monthlyRate, months) - 1);
+      }
+
+      function getInputs() {
+        return {
+          incomes: [
+            { amount: numberValue($("income1").value), frequency: $("freq1").value },
+            { amount: numberValue($("income2").value), frequency: $("freq2").value },
+            { amount: numberValue($("income3").value), frequency: $("freq3").value }
+          ],
+          monthlyExpenses: numberValue($("monthlyExpenses").value),
+          expenseDay: numberValue($("expenseDay").value),
+          mortgageBalance: numberValue($("mortBalance").value),
+          mortgageRate: numberValue($("mortRate").value),
+          mortgageYears: numberValue($("mortYears").value),
+          mortgagePayDay: numberValue($("mortPayDay").value),
+          accountCapacity: numberValue($("accountCapacity").value),
+          accountRate: numberValue($("accountRate").value),
+          advancePct: numberValue($("advancePct").value),
+          minimumAdvance: numberValue($("minimumAdvance").value),
+          includeDirectComparison: $("directCompare").checked
+        };
+      }
+
+      function validateInputs(input) {
+        const errors = [];
+
+        if (input.mortgageBalance <= 0) errors.push("Enter a mortgage principal balance greater than $0.");
+        if (input.mortgageYears <= 0) errors.push("Enter years remaining greater than 0.");
+        if (input.mortgageRate < 0) errors.push("Mortgage rate cannot be negative.");
+        if (input.accountCapacity <= 0) errors.push("Enter an Account Capacity greater than $0.");
+        if (input.accountRate < 0) errors.push("Account rate cannot be negative.");
+        if (input.advancePct <= 0 || input.advancePct > 100) errors.push("Advance size must be greater than 0% and no more than 100%.");
+        if (input.minimumAdvance <= 0) errors.push("Minimum advance must be greater than $0.");
+        if (input.monthlyExpenses < 0) errors.push("Monthly expenses cannot be negative.");
+
+        return errors;
+      }
+
+      function buildIncomeStreams(incomes) {
+        return incomes
+          .filter((income) => income.amount > 0)
+          .map((income) => ({
+            amount: income.amount,
+            periodDays: frequencyToDays(income.frequency),
+            nextDepositDay: 1
+          }));
+      }
+
+      function addMonthRecord(records, month, event) {
+        if (month > 24) return;
+
+        if (!records[month]) {
+          records[month] = {
+            month,
+            deposits: 0,
+            expenses: 0,
+            mortgagePayment: 0,
+            advances: 0,
+            mortgagePrincipal: 0,
+            accountBalance: 0,
+            mortgageBalance: 0
+          };
         }
-      }
-      if (depositsToday > 0){
-        helocBal = Math.max(0, helocBal - depositsToday);
+
+        Object.keys(event).forEach((key) => {
+          records[month][key] += event[key];
+        });
       }
 
-      // 3) Mortgage monthly interest accrues on day 1
-      if (dayOfMonth === 1 && mortBal > 0){
-        const mi = mortBal * mortMonthlyRate;
-        totalMortInt += mi;
-        mortBal += mi;
-      }
+      function simulateStandardMortgage(input) {
+        const monthlyRate = (input.mortgageRate / 100) / 12;
+        const scheduledPayment = mortgagePayment(
+          input.mortgageBalance,
+          input.mortgageRate,
+          input.mortgageYears
+        );
 
-      // 4) Chunk trigger (cycle rule):
-      // Only when (a) mortgage still exists, and (b) HELOC is effectively paid off (<= ZERO_EPS)
-      // Use % of available credit and apply to mortgage principal.
-      if (mortBal > 0 && helocBal <= ZERO_EPS){
-        const available = Math.max(0, helocLimit - helocBal); // ~helocLimit
-        const pct = clamp(n(chunkPct)/100, 0, 1);
-        let chunk = available * pct;
-        chunk = Math.min(chunk, mortBal);
-        if (chunk >= n(chunkMin) && chunk > 0){
-          helocBal += chunk;
-          mortBal  -= chunk;
+        let balance = input.mortgageBalance;
+        let totalInterest = 0;
+        let months = 0;
+        const maxMonths = Math.round(MAX_SIMULATION_DAYS / DAYS_PER_MONTH);
+
+        while (balance > MONEY_EPSILON && months < maxMonths) {
+          const monthlyInterest = balance * monthlyRate;
+          const payment = Math.min(scheduledPayment, balance + monthlyInterest);
+          const principalPaid = Math.max(0, payment - monthlyInterest);
+
+          totalInterest += monthlyInterest;
+          balance = Math.max(0, balance - principalPaid);
+          months += 1;
         }
+
+        const completed = balance <= MONEY_EPSILON;
+
+        return {
+          completed,
+          status: completed ? "Paid off" : "Time limit reached",
+          days: months * DAYS_PER_MONTH,
+          scheduledPayment,
+          totalMortgageInterest: totalInterest,
+          totalInterest,
+          endingMortgageBalance: balance
+        };
       }
 
-      // 5) Mortgage payment (withdraw from HELOC)
-      if (dayOfMonth === n(mortPayDay) && mortBal > 0){
-        const pay = Math.min(mortPmt, mortBal);
-        helocBal += pay;
-        mortBal  -= pay;
+      function simulateAccelerationPlan(input) {
+        const monthlyMortgageRate = (input.mortgageRate / 100) / 12;
+        const dailyAccountRate = (input.accountRate / 100) / DAYS_PER_YEAR;
+        const scheduledMortgagePayment = mortgagePayment(
+          input.mortgageBalance,
+          input.mortgageRate,
+          input.mortgageYears
+        );
+
+        let mortgageBalance = input.mortgageBalance;
+        let accountBalance = 0;
+        let totalMortgageInterest = 0;
+        let totalAccountInterest = 0;
+        let highestAccountBalance = 0;
+        let advanceCount = 0;
+        let lastAdvanceDay = -Infinity;
+        let previousAdvanceOutstanding = false;
+        let day = 0;
+        let failureReason = "";
+        let planStatus = "In progress";
+
+        const streams = buildIncomeStreams(input.incomes);
+        const monthlyRecords = {};
+
+        while (
+          (mortgageBalance > MONEY_EPSILON || accountBalance > MONEY_EPSILON) &&
+          day < MAX_SIMULATION_DAYS &&
+          !failureReason
+        ) {
+          day += 1;
+
+          const dayOfMonth = ((day - 1) % DAYS_PER_MONTH) + 1;
+          const month = Math.ceil(day / DAYS_PER_MONTH);
+
+          if (accountBalance > MONEY_EPSILON) {
+            const dailyInterest = accountBalance * dailyAccountRate;
+            totalAccountInterest += dailyInterest;
+            accountBalance += dailyInterest;
+          }
+
+          if (accountBalance > input.accountCapacity + MONEY_EPSILON) {
+            failureReason = "Account Capacity Reached: daily account interest caused the projected balance to exceed the selected capacity.";
+            break;
+          }
+
+          let depositsToday = 0;
+
+          for (const stream of streams) {
+            if (day === stream.nextDepositDay) {
+              depositsToday += stream.amount;
+              stream.nextDepositDay += stream.periodDays;
+            }
+          }
+
+          if (depositsToday > 0) {
+            accountBalance = Math.max(0, accountBalance - depositsToday);
+            addMonthRecord(monthlyRecords, month, { deposits: depositsToday });
+          }
+
+          if (previousAdvanceOutstanding && accountBalance <= PAYOFF_THRESHOLD) {
+            accountBalance = 0;
+            previousAdvanceOutstanding = false;
+          }
+
+          const canAdvance =
+            mortgageBalance > MONEY_EPSILON &&
+            !previousAdvanceOutstanding &&
+            accountBalance <= PAYOFF_THRESHOLD &&
+            (day - lastAdvanceDay) >= MIN_DAYS_BETWEEN_ADVANCES;
+
+          if (canAdvance) {
+            const availableCapacity = Math.max(0, input.accountCapacity - accountBalance);
+            const proposedAdvance = availableCapacity * clamp(input.advancePct / 100, 0, 1);
+            const advance = Math.min(proposedAdvance, mortgageBalance);
+
+            if (advance >= input.minimumAdvance - MONEY_EPSILON) {
+              const mortgageBefore = mortgageBalance;
+              const accountBefore = accountBalance;
+
+              accountBalance += advance;
+              mortgageBalance -= advance;
+
+              const accountIncrease = accountBalance - accountBefore;
+              const mortgageReduction = mortgageBefore - mortgageBalance;
+
+              if (Math.abs(accountIncrease - mortgageReduction) > MONEY_EPSILON) {
+                failureReason = "Calculation integrity check failed while applying an account advance.";
+                break;
+              }
+
+              advanceCount += 1;
+              previousAdvanceOutstanding = true;
+              lastAdvanceDay = day;
+              addMonthRecord(monthlyRecords, month, {
+                advances: advance,
+                mortgagePrincipal: advance
+              });
+            }
+          }
+
+          if (accountBalance > input.accountCapacity + MONEY_EPSILON) {
+            failureReason = "Account Capacity Reached: the account advance exceeds the selected capacity.";
+            break;
+          }
+
+          if (dayOfMonth === input.mortgagePayDay && mortgageBalance > MONEY_EPSILON) {
+            const mortgageInterest = mortgageBalance * monthlyMortgageRate;
+            const maximumPayment = mortgageBalance + mortgageInterest;
+            const actualPayment = Math.min(scheduledMortgagePayment, maximumPayment);
+            const principalPaid = Math.max(0, actualPayment - mortgageInterest);
+
+            totalMortgageInterest += mortgageInterest;
+            mortgageBalance = Math.max(0, mortgageBalance - principalPaid);
+            accountBalance += actualPayment;
+
+            addMonthRecord(monthlyRecords, month, {
+              mortgagePayment: actualPayment,
+              mortgagePrincipal: principalPaid
+            });
+
+            if (accountBalance > input.accountCapacity + MONEY_EPSILON) {
+              failureReason = "Account Capacity Reached: the scheduled mortgage payment would exceed the selected account capacity.";
+              break;
+            }
+          }
+
+          if (dayOfMonth === input.expenseDay && input.monthlyExpenses > 0) {
+            accountBalance += input.monthlyExpenses;
+            addMonthRecord(monthlyRecords, month, { expenses: input.monthlyExpenses });
+
+            if (accountBalance > input.accountCapacity + MONEY_EPSILON) {
+              failureReason = "Account Capacity Reached: scheduled expenses would exceed the selected account capacity.";
+              break;
+            }
+          }
+
+          highestAccountBalance = Math.max(highestAccountBalance, accountBalance);
+
+          if (mortgageBalance < MONEY_EPSILON) mortgageBalance = 0;
+          if (accountBalance < MONEY_EPSILON) accountBalance = 0;
+
+          if (month <= 24 && monthlyRecords[month]) {
+            monthlyRecords[month].accountBalance = accountBalance;
+            monthlyRecords[month].mortgageBalance = mortgageBalance;
+          }
+        }
+
+        const completed =
+          mortgageBalance <= MONEY_EPSILON &&
+          accountBalance <= MONEY_EPSILON &&
+          !failureReason;
+
+        if (completed) {
+          planStatus = "Paid off";
+        } else if (failureReason) {
+          planStatus = "Account Capacity Reached";
+        } else if (day >= MAX_SIMULATION_DAYS) {
+          planStatus = "Time limit reached";
+          failureReason = "The plan did not pay off both balances within the maximum 80-year simulation period.";
+        } else {
+          planStatus = "Incomplete";
+          failureReason = "The plan ended before both balances reached $0.";
+        }
+
+        const records = [];
+        for (let month = 1; month <= Math.min(24, Math.ceil(day / DAYS_PER_MONTH)); month += 1) {
+          const record = monthlyRecords[month] || {
+            month,
+            deposits: 0,
+            expenses: 0,
+            mortgagePayment: 0,
+            advances: 0,
+            mortgagePrincipal: 0,
+            accountBalance,
+            mortgageBalance
+          };
+
+          if (record.accountBalance === 0 && record.mortgageBalance === 0) {
+            record.accountBalance = accountBalance;
+            record.mortgageBalance = mortgageBalance;
+          }
+
+          records.push(record);
+        }
+
+        return {
+          completed,
+          status: planStatus,
+          failureReason,
+          days: day,
+          scheduledMortgagePayment,
+          totalMortgageInterest,
+          totalAccountInterest,
+          totalInterest: totalMortgageInterest + totalAccountInterest,
+          highestAccountBalance,
+          peakUtilization: input.accountCapacity > 0
+            ? (highestAccountBalance / input.accountCapacity) * 100
+            : 0,
+          advanceCount,
+          endingMortgageBalance: mortgageBalance,
+          endingAccountBalance: accountBalance,
+          monthlyRecords: records
+        };
       }
 
-      // 6) Monthly expenses on day 30 (withdraw from HELOC)
-      if (dayOfMonth === DAYS_PER_MONTH && monthlyExpenses > 0){
-        helocBal += monthlyExpenses;
+      function simulateDirectPrincipal(input) {
+        const monthlyRate = (input.mortgageRate / 100) / 12;
+        const scheduledPayment = mortgagePayment(
+          input.mortgageBalance,
+          input.mortgageRate,
+          input.mortgageYears
+        );
+
+        const monthlyIncome = estimatedMonthlyIncome(input.incomes);
+        const extraPrincipal = Math.max(
+          0,
+          monthlyIncome - input.monthlyExpenses - scheduledPayment
+        );
+
+        let balance = input.mortgageBalance;
+        let totalInterest = 0;
+        let months = 0;
+        const maxMonths = Math.round(MAX_SIMULATION_DAYS / DAYS_PER_MONTH);
+
+        while (balance > MONEY_EPSILON && months < maxMonths) {
+          const monthlyInterest = balance * monthlyRate;
+          const regularPayment = Math.min(scheduledPayment, balance + monthlyInterest);
+          const regularPrincipal = Math.max(0, regularPayment - monthlyInterest);
+
+          totalInterest += monthlyInterest;
+          balance = Math.max(0, balance - regularPrincipal);
+
+          if (balance > MONEY_EPSILON && extraPrincipal > 0) {
+            const extraApplied = Math.min(extraPrincipal, balance);
+            balance = Math.max(0, balance - extraApplied);
+          }
+
+          months += 1;
+        }
+
+        const completed = balance <= MONEY_EPSILON;
+
+        return {
+          completed,
+          status: completed
+            ? (extraPrincipal > 0 ? "Paid off" : "Same as standard")
+            : "Time limit reached",
+          days: months * DAYS_PER_MONTH,
+          scheduledPayment,
+          monthlyExtraPrincipal: extraPrincipal,
+          totalMortgageInterest: totalInterest,
+          totalInterest,
+          endingMortgageBalance: balance
+        };
       }
 
-      // Clean small negatives
-      if (mortBal < 0.01) mortBal = 0;
-      if (helocBal < 0.01) helocBal = 0;
+      function setStatus(type, message) {
+        const statusBox = $("statusBox");
+        statusBox.className = `status ${type}`;
 
-      // If HELOC is maxed and mortgage still exists and we never reduce, break eventually
-      if (helocBal >= helocLimit - 0.01 && day > 120){
-        const anyIncome = streams.some(s => s.amt > 0);
-        if (!anyIncome) break;
+        const icon = statusBox.querySelector(".status-icon");
+        icon.textContent = type === "success" ? "✓" : type === "warning" ? "!" : "×";
+
+        $("statusText").textContent = message;
       }
-    }
 
-    return {
-      days: day,
-      years: day / DAYS_PER_YEAR,
-      mortPmt,
-      totalInterest: totalMortInt + totalHelocInt,
-      mortInterest: totalMortInt,
-      helocInterest: totalHelocInt,
-      endedWith: { mortBal, helocBal }
-    };
-  }
+      function renderEventLog(records) {
+        const body = $("eventLogBody");
 
-  function getInputs(){
-    return {
-      income1: n(document.getElementById("income1").value),
-      freq1: document.getElementById("freq1").value,
-      income2: n(document.getElementById("income2").value),
-      freq2: document.getElementById("freq2").value,
-      income3: n(document.getElementById("income3").value),
-      freq3: document.getElementById("freq3").value,
+        if (!records || records.length === 0) {
+          body.innerHTML = `<tr><td colspan="8">No activity is available for the selected plan.</td></tr>`;
+          return;
+        }
 
-      monthlyExpenses: n(document.getElementById("monthlyExpenses").value),
+        body.innerHTML = records.map((record) => `
+          <tr>
+            <td>${record.month}</td>
+            <td>${money(record.deposits)}</td>
+            <td>${money(record.expenses)}</td>
+            <td>${money(record.mortgagePayment)}</td>
+            <td>${money(record.advances)}</td>
+            <td>${money(record.mortgagePrincipal)}</td>
+            <td>${money(record.accountBalance)}</td>
+            <td>${money(record.mortgageBalance)}</td>
+          </tr>
+        `).join("");
+      }
 
-      mortBalance: n(document.getElementById("mortBalance").value),
-      mortRate: n(document.getElementById("mortRate").value),
-      mortYears: n(document.getElementById("mortYears").value),
-      mortPayDay: n(document.getElementById("mortPayDay").value),
+      function renderResults(input, standard, plan, direct) {
+        $("resultsPanel").classList.add("visible");
 
-      helocLimit: n(document.getElementById("helocLimit").value),
-      helocRate: n(document.getElementById("helocRate").value),
-      chunkPct: n(document.getElementById("chunkPct").value),
-      chunkMin: n(document.getElementById("chunkMin").value),
-    };
-  }
+        const planDifference = standard.totalInterest - plan.totalInterest;
+        const planTimeDifference = standard.days - plan.days;
 
-  function calc(){
-    const v = getInputs();
-    const warnEl = document.getElementById("warn");
-    warnEl.textContent = "";
-    warnEl.className = "warn";
+        const interestFavorable = planDifference >= 0;
+        const timeFavorable = planTimeDifference >= 0;
 
-    if (v.mortBalance <= 0 || v.mortYears <= 0){
-      warnEl.textContent = "Enter a valid mortgage balance and years remaining.";
-      warnEl.classList.add("neg");
-      return;
-    }
-    if (v.helocLimit <= 0){
-      warnEl.textContent = "Enter a valid HELOC limit.";
-      warnEl.classList.add("neg");
-      return;
-    }
+        $("interestDifferenceLabel").textContent = interestFavorable
+          ? "Interest Savings vs Standard"
+          : "Additional Interest vs Standard";
 
-    const incomes = [
-      { amt: v.income1, freq: v.freq1 },
-      { amt: v.income2, freq: v.freq2 },
-      { amt: v.income3, freq: v.freq3 },
-    ];
+        $("interestDifferenceValue").textContent = money(Math.abs(planDifference));
 
-    // Approx monthly income (warning-only)
-    const approxMonthlyIncome =
-      (v.freq1==="weekly"? v.income1*4.333 : v.freq1==="biweekly"? v.income1*2.167 : v.income1) +
-      (v.freq2==="weekly"? v.income2*4.333 : v.freq2==="biweekly"? v.income2*2.167 : v.income2) +
-      (v.freq3==="weekly"? v.income3*4.333 : v.freq3==="biweekly"? v.income3*2.167 : v.income3);
+        $("timeDifferenceLabel").textContent = timeFavorable
+          ? "Time Saved vs Standard"
+          : "Additional Time vs Standard";
 
-    const std = runStandardMortgage(v.mortBalance, v.mortRate, v.mortYears);
-    const stdYears = std.months / 12;
+        $("timeDifferenceValue").textContent = yearsAndMonths(Math.abs(planTimeDifference));
 
-    const vel = runVelocityCycle({
-      mortBalance0: v.mortBalance,
-      mortRatePct: v.mortRate,
-      mortYears: v.mortYears,
-      mortPayDay: v.mortPayDay,
-      helocLimit: v.helocLimit,
-      helocRatePct: v.helocRate,
-      chunkPct: v.chunkPct,
-      chunkMin: v.chunkMin,
-      monthlyExpenses: v.monthlyExpenses,
-      incomes
-    });
+        $("stdTime").textContent = yearsAndMonths(standard.days);
+        $("planTime").textContent = plan.completed ? yearsAndMonths(plan.days) : "Not completed";
+        $("stdMortgageInterest").textContent = money(standard.totalMortgageInterest);
+        $("planMortgageInterest").textContent = money(plan.totalMortgageInterest);
+        $("planAccountInterest").textContent = money(plan.totalAccountInterest);
+        $("stdCombinedInterest").textContent = money(standard.totalInterest);
+        $("planCombinedInterest").textContent = money(plan.totalInterest);
+        $("stdStatus").textContent = standard.status;
+        $("planStatus").textContent = plan.status;
 
-    const velYears = vel.years;
-    const timeSaved = Math.max(0, stdYears - velYears);
-    const interestSaved = Math.max(0, std.interest - vel.totalInterest);
+        const directVisible = input.includeDirectComparison;
+        $("directHeader").style.display = directVisible ? "" : "none";
 
-    document.getElementById("stdYearsOut").textContent = stdYears.toFixed(1);
-    document.getElementById("velYearsOut").textContent = velYears.toFixed(1);
-    document.getElementById("timeSaved").textContent = timeSaved.toFixed(1);
+        [
+          "directTime",
+          "directMortgageInterest",
+          "directCombinedInterest",
+          "directStatus"
+        ].forEach((id) => {
+          $(id).style.display = directVisible ? "" : "none";
+        });
 
-    document.getElementById("stdPmtOut").textContent = fmt0(std.pmt);
-    document.getElementById("stdPmtOut2").textContent = fmt0(std.pmt);
+        if (directVisible && direct) {
+          $("directTime").textContent = yearsAndMonths(direct.days);
+          $("directMortgageInterest").textContent = money(direct.totalMortgageInterest);
+          $("directCombinedInterest").textContent = money(direct.totalInterest);
+          $("directStatus").textContent = direct.status;
+        }
 
-    document.getElementById("stdIntOut").textContent = fmt0(std.interest);
-    document.getElementById("velIntOut").textContent = fmt0(vel.totalInterest);
-    document.getElementById("interestSaved").textContent = fmt0(interestSaved);
+        $("scheduledMortgagePayment").textContent = `${money(plan.scheduledMortgagePayment)}/mo`;
+        $("advanceCycles").textContent = String(plan.advanceCount);
+        $("highestAccountBalance").textContent = money(plan.highestAccountBalance);
+        $("peakUtilization").textContent = percent(plan.peakUtilization);
+        $("endingMortgageBalance").textContent = money(plan.endingMortgageBalance);
+        $("endingAccountBalance").textContent = money(plan.endingAccountBalance);
 
-    const approxNet = approxMonthlyIncome - v.monthlyExpenses - std.pmt;
-    if (approxMonthlyIncome <= v.monthlyExpenses){
-      warnEl.textContent = "Warning: Approx monthly income ≤ expenses. HELOC will likely grow and cycle may stall.";
-      warnEl.classList.add("neg");
-    } else if (approxNet <= 0){
-      warnEl.textContent = "Note: After expenses + mortgage payment, monthly surplus looks small/negative. Cycle may be slow and HELOC utilization high.";
-      warnEl.classList.add("neg");
-    } else {
-      warnEl.textContent = "Simulation complete. Next chunk triggers only after HELOC is paid back down to ~$0.";
-      warnEl.classList.add("pos");
-    }
+        if (plan.completed) {
+          const message = interestFavorable
+            ? "The Acceleration Plan reached payoff for both balances. Review the details and compare the combined interest estimate before relying on the plan."
+            : "The Acceleration Plan reached payoff for both balances, but the projected combined interest is higher than the standard mortgage estimate.";
 
-    const r = document.getElementById("results");
-    r.style.display = "block";
-    r.scrollIntoView({behavior:"smooth"});
-  }
+          setStatus(interestFavorable ? "success" : "warning", message);
+          $("resultsSubtitle").textContent = "Both the mortgage and Acceleration Account balances reached $0 in the simulation.";
+        } else {
+          setStatus(
+            "error",
+            plan.failureReason || "The Acceleration Plan did not complete under the selected inputs."
+          );
+          $("resultsSubtitle").textContent = "The acceleration scenario did not reach a complete payoff result.";
+        }
 
-  document.getElementById("calcBtn").addEventListener("click", calc);
-})();
-</script>
+        renderEventLog(plan.monthlyRecords);
+        $("resultsPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function calculate() {
+        const input = getInputs();
+        const errors = validateInputs(input);
+
+        $("resultsPanel").classList.add("visible");
+
+        if (errors.length > 0) {
+          setStatus("error", errors.join(" "));
+          $("resultsSubtitle").textContent = "Correct the input fields and calculate again.";
+          return;
+        }
+
+        const standard = simulateStandardMortgage(input);
+        const plan = simulateAccelerationPlan(input);
+        const direct = input.includeDirectComparison ? simulateDirectPrincipal(input) : null;
+
+        renderResults(input, standard, plan, direct);
+      }
+
+      function assertTest(name, condition, detail) {
+        return {
+          name,
+          passed: Boolean(condition),
+          detail
+        };
+      }
+
+      function runInternalTests() {
+        const testInput = {
+          incomes: [
+            { amount: 2400, frequency: "biweekly" },
+            { amount: 1200, frequency: "weekly" },
+            { amount: 0, frequency: "monthly" }
+          ],
+          monthlyExpenses: 4200,
+          expenseDay: 30,
+          mortgageBalance: 240000,
+          mortgageRate: 5.75,
+          mortgageYears: 25,
+          mortgagePayDay: 1,
+          accountCapacity: 90000,
+          accountRate: 8.25,
+          advancePct: 25,
+          minimumAdvance: 1000,
+          includeDirectComparison: true
+        };
+
+        const basePlan = simulateAccelerationPlan(testInput);
+        const standard = simulateStandardMortgage(testInput);
+
+        const firstRecord = basePlan.monthlyRecords.find((record) => record.advances > 0);
+        const recordsWithAdvances = basePlan.monthlyRecords.filter((record) => record.advances > 0);
+
+        const capacityFailurePlan = simulateAccelerationPlan({
+          ...testInput,
+          accountCapacity: 1000,
+          monthlyExpenses: 7000,
+          advancePct: 50
+        });
+
+        const unfavorablePlan = simulateAccelerationPlan({
+          ...testInput,
+          accountRate: 50,
+          accountCapacity: 160000,
+          advancePct: 70,
+          monthlyExpenses: 5200
+        });
+
+        const unfavorableDifference = standard.totalInterest - unfavorablePlan.totalInterest;
+
+        const tests = [
+          assertTest(
+            "Account advance transfers the same amount between balances",
+            Boolean(firstRecord) && firstRecord.advances > 0 && firstRecord.mortgagePrincipal >= firstRecord.advances - MONEY_EPSILON,
+            "An account advance is logged as an equal mortgage-principal reduction."
+          ),
+          assertTest(
+            "Account interest is charged when the account balance is positive",
+            basePlan.totalAccountInterest > 0,
+            "The plan produced positive Account Interest while advances and withdrawals created a positive account balance."
+          ),
+          assertTest(
+            "Advance cycle timing prevents immediate duplicate advances",
+            recordsWithAdvances.length < 2 || recordsWithAdvances.every((record, index) => {
+              if (index === 0) return true;
+              return (record.month - recordsWithAdvances[index - 1].month) >= 1;
+            }),
+            "Separate advances are constrained by a 30-day minimum interval and prior-balance payoff threshold."
+          ),
+          assertTest(
+            "Negative balances are prevented",
+            basePlan.endingMortgageBalance >= 0 && basePlan.endingAccountBalance >= 0,
+            "Ending balances are capped at $0 rather than allowed to become negative."
+          ),
+          assertTest(
+            "Account Capacity failure is identified",
+            !capacityFailurePlan.completed && capacityFailurePlan.status === "Account Capacity Reached",
+            "A low capacity and high scheduled withdrawals stop the simulation with a capacity failure."
+          ),
+          assertTest(
+            "Unfavorable interest is preserved rather than shown as zero savings",
+            unfavorableDifference < 0 || !unfavorablePlan.completed,
+            "The calculator retains negative interest differences as Additional Interest instead of converting them to $0."
+          ),
+          assertTest(
+            "Final payoff does not overpay debt balances",
+            basePlan.endingMortgageBalance >= 0 &&
+              basePlan.endingAccountBalance >= 0 &&
+              standard.endingMortgageBalance >= 0,
+            "Final payments and advances are capped by the applicable remaining balance."
+          )
+        ];
+
+        $("resultsPanel").classList.add("visible");
+        $("testPanel").hidden = false;
+
+        $("testResults").innerHTML = tests.map((test) => `
+          <div class="test-result ${test.passed ? "test-pass" : "test-fail"}">
+            ${test.passed ? "PASS" : "CHECK"} — ${test.name}<br />
+            <span>${test.detail}</span>
+          </div>
+        `).join("");
+
+        const passedCount = tests.filter((test) => test.passed).length;
+        setStatus(
+          passedCount === tests.length ? "success" : "warning",
+          `${passedCount} of ${tests.length} internal calculation checks passed. Review any item marked CHECK before relying on the model.`
+        );
+
+        $("resultsSubtitle").textContent = "Internal test results are shown below.";
+        $("resultsPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      $("calculateBtn").addEventListener("click", calculate);
+      $("runTestsBtn").addEventListener("click", runInternalTests);
+    })();
+  </script>
 </body>
 </html>
